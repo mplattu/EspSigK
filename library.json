@@ -1,0 +1,63 @@
+{
+  "name": "EspSigK",
+  "version": "0.2.0",
+  "description": "Library to help using Signal K on a MCU sensor",
+  "keywords": "SignalK, Signal K, marine, boat, sensor, hardware, embedded, device",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/mplattu/EspSigK.git"
+  },
+  "authors":
+  [
+    {
+      "name": "Thomas St.Pierre",
+      "email": "thomas@samoht.ca",
+      "url": "https://github.com/mxtommy/"
+    },
+    {
+      "name": "Matti Lattu",
+      "email": "matti.lattu@iki.fi",
+      "url": "https://github.com/mplattu/",
+      "maintainer": true
+    }
+  ],
+  "license": "MIT",
+  "dependencies": [
+    {
+      "name": "ESP8266WiFi",
+      "platforms": "espressif8266"
+    },
+    {
+      "name": "ESP8266WebServer",
+      "platforms": "espressif8266"
+    },
+    {
+      "name": "ESP8266mDNS",
+      "platforms": "espressif8266"
+    },
+    {
+      "name": "ESP8266SSDP",
+      "platforms": "espressif8266"
+    },
+    {
+      "owner": "gilmaimon",
+      "name": "ArduinoWebsockets"
+    },
+    {
+      "owner": "bblanchon",
+      "name": "ArduinoJson"
+    },
+    {
+      "owner": "RobTillaart",
+      "name": "UUID"
+    },
+    {
+      "owner": "vshymanskyy",
+      "name": "Preferences",
+      "platforms": "espressif8266"
+    }
+  ],
+  "frameworks": "arduino",
+  "platforms": "*"
+}
