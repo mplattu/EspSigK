@@ -232,10 +232,9 @@ void EspSigK::begin() {
   WiFi.mode(WIFI_STA);
   connectWifi();
 
-  setupSignalKServerToken();
-
   setupDiscovery();
   setupHTTP();
+  setupSignalKServerToken();
   setupWebSocket();
 }
 
@@ -457,7 +456,11 @@ void EspSigK::getRequestHref(const char * clientId, char * requestHref) {
     newRequestHref = accessResponse.href.c_str();
     strcpy(requestHref, newRequestHref);
     printDebugSerialMessage(".", false);
-    delay(1000);
+
+    for (byte n=0; n<11; n++) {
+      server.handleClient();
+      delay(100);
+    }
   }
   printDebugSerialMessage(requestHref, true);
 
@@ -490,7 +493,11 @@ void EspSigK::getRequestToken(const char * requestHref, char * token) {
     printDebugSerialMessage("[" + accessResponse.state + "] ", true);
     newServerToken = accessResponse.accessRequestToken.c_str();
     strcpy(token, newServerToken);
-    delay(1000);
+
+    for (byte n=0; n<11; n++) {
+      server.handleClient();
+      delay(100);
+    }
   }
 
   printDebugSerialMessage(F("Got token: "), false);
