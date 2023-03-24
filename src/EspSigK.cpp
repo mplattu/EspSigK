@@ -59,9 +59,25 @@ const char * EspSigKIndexContents = R"foo(
 
   <p>
     <ul>
+      <li><a href="reboot">Reboot device</a></li>
       <li><a href="reset_auth">Reset authentication tokens</a></li>
     </ul>
   </p>
+</body>
+</html>
+)foo";
+
+// Response to reboot
+const char * RebootContent = R"foo(
+<html>
+<head>
+  <title>Device Reboot</title>
+  <meta charset="utf-8">
+</head>
+<body>
+<h3>Device Reboot</h3>
+<p>Device reboot was executed.</p>
+<a href="/">Go back</a>
 </body>
 </html>
 )foo";
@@ -297,6 +313,11 @@ void EspSigK::setupHTTP() {
     });
   server.on("/index.html",[]() {
       server.send ( 200, "text/html", EspSigKIndexContents );
+    });
+  server.on("/reboot", [&]() {
+      server.send (200, "text/html", RebootContent );
+      delay(1000);
+      ESP.restart();
     });
   server.on("/reset_auth",[&]() {
       server.send ( 200, "text/html", EspSigKAuthResetContent );
