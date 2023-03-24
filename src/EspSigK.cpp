@@ -7,7 +7,12 @@
 
 
 // Server variables
+#ifdef EspSigK_ESP8266
 ESP8266WebServer server(80);
+#endif
+#ifdef EspSigK_ESP32
+WebServer server(80);
+#endif
 websockets::WebsocketsClient webSocketClient;
 
 bool printDeltaSerial;
@@ -475,6 +480,13 @@ void EspSigK::getRequestToken(const char * requestHref, char * token) {
   const char * newServerToken;
   while (strcmp(token, "") == 0) {
     accessResponse = sendAccessRequest(requestHref, false, jsonPayload);
+
+    if (accessResponse.error == 4) {
+      printDebugSerialMessage("Got error 4, starting over", true);
+      preferencesClear();
+      ESP.restart();
+    }
+
     printDebugSerialMessage("[" + accessResponse.state + "] ", true);
     newServerToken = accessResponse.accessRequestToken.c_str();
     strcpy(token, newServerToken);
@@ -485,6 +497,18 @@ void EspSigK::getRequestToken(const char * requestHref, char * token) {
   printDebugSerialMessage(token, true);
 
   preferencesPutServerToken(token);
+}
+
+IPAddress EspSigK::stringToIPAddress(const String &ipAddrStr) {
+  IPAddress ip;
+
+  if (ip.fromString(ipAddrStr.c_str())) {
+    return ip;
+  }
+
+  printDebugSerialMessage("Failed to convert following address to IP: ", false);
+  printDebugSerialMessage(ipAddrStr, true);
+  return IPAddress(0, 0, 0, 0);
 }
 
 signalKAccessResponse EspSigK::sendAccessRequest(const String &urlPath, bool isPost, const String &jsonPayload) {
@@ -500,7 +524,9 @@ signalKAccessResponse EspSigK::sendAccessRequest(const String &urlPath, bool isP
   printDebugSerialMessage(F("Wifi status: "), false);
   printDebugSerialMessage(WiFi.status(), true);
 
-  if (! wiFiClient->connect(signalKServerHost, signalKServerPort)) {
+  IPAddress signalKServerHostIP = stringToIPAddress(signalKServerHost);
+
+  if (! wiFiClient->connect(signalKServerHostIP, signalKServerPort)) {
     printDebugSerialMessage(F("sendAccessRequest could not connect to server"), true);
     response.error = 1;
     return response;
@@ -557,8 +583,6 @@ signalKAccessResponse EspSigK::sendAccessRequest(const String &urlPath, bool isP
 
   const int capacity = JSON_OBJECT_SIZE(JSON_DESERIALIZE_HTTP_RESPONSE_SIZE);
   DynamicJsonDocument payload(capacity);
-  // const int capacityAccessRequest = JSON_OBJECT_SIZE(JSON_DESERIALIZE_HTTP_RESPONSE_SIZE);
-  // StaticJsonDocument<capacityAccessRequest> payloadAccessRequest;
 
   DeserializationError error = deserializeJson(payload, *wiFiClient);
   if (error) {
@@ -569,10 +593,33 @@ signalKAccessResponse EspSigK::sendAccessRequest(const String &urlPath, bool isP
     return response;
   }
 
-  response.state = String((const char*)payload["state"]);
-  response.href = String((const char*)payload["href"]);
-  response.accessRequestPermission = String((const char*)payload["accessRequest"]["permission"]);
-  response.accessRequestToken = String((const char*)payload["accessRequest"]["token"]);
+  const char* state = payload["state"];
+  if (state) {
+    response.state = state;
+  } else {
+    response.state = "";
+  }
+
+  const char* href = payload["href"];
+  if (href) {
+    response.href = href;
+  } else {
+    response.href = "";
+  }
+
+  const char* accessRequest_permission = payload["accessRequest"]["permission"];
+  if (accessRequest_permission) {
+    response.accessRequestPermission = String(accessRequest_permission);
+  } else {
+    response.accessRequestPermission = "";
+  }
+
+  const char* accessRequest_token = payload["accessRequest"]["token"];
+  if (accessRequest_token) {
+    response.accessRequestToken = String(accessRequest_token);
+  } else {
+    response.accessRequestToken = "";
+  }
 
   printDebugSerialMessage("state: ", false);
   printDebugSerialMessage(response.state, true);
@@ -646,7 +693,14 @@ void EspSigK::sendDelta() {
         
   
   serializeJson(delta, deltaText);
-  if (printDeltaSerial) Serial.println(deltaText);
+  if (printDeltaSerial) {
+    // Serial.print(esp_timer_get_time() / 1000);
+    Serial.print(millis() / 1000);
+    Serial.print(" ");
+    Serial.print(WiFi.localIP());
+    Serial.print(" ");
+    Serial.println(deltaText);
+  }
   if (wsClientConnected) { // client
     webSocketClient.send(deltaText);
   }

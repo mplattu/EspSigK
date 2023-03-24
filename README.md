@@ -16,6 +16,10 @@ Currently the library provides the following:
 However, the library does not do the following:
 * Receive deltas and pass message to callback function
 
+Supported microcontrollers:
+* ESP8266 (tested Wemos D1), `EspSigK_ESP8266`
+* ESP32 (tested ESP-WROOM32), `EspSigK_ESP32`
+
 ## Check out SensESP
 
 Before starting to use EspSigK check out [SensESP](https://github.com/SignalK/SensESP/) which is the
@@ -24,6 +28,15 @@ market leader of Signal K sensor libraries.
 ## Developing
 
 ### Example
+
+Define either `EspSigK_ESP8266` or `EspSigK_ESP32` at compile time. When using PlatformIO you can define
+symbols in `platformio.ini`:
+
+```
+build_flags = -DEspSigK_ESP8266
+```
+
+Sample app:
 
 ```
 #include <Arduino.h>

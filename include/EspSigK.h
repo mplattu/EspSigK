@@ -1,15 +1,18 @@
 #ifndef EspSigK_H
 #define EspSigK_H
 
-extern "C" {
-  #include "user_interface.h"
-}
-
+#ifdef EspSigK_ESP8266
 #include <ESP8266WiFi.h>        // ESP8266 Core WiFi Library (you most likely already have this in your sketch)
 #include <ESP8266mDNS.h>        // Include the mDNS library
 #include <ESP8266SSDP.h>
 #include <ESP8266WebServer.h>   // Local WebServer used to serve the configuration portal
-
+#endif
+#ifdef EspSigK_ESP32
+#include <ESPmDNS.h>
+#include <WiFi.h>
+#include <ESP32SSDP.h>
+#include <WebServer.h>
+#endif
 
 #include <ArduinoJson.h>        // https://github.com/bblanchon/ArduinoJson
 #include <ArduinoWebsockets.h>  // https://github.com/gilmaimon/ArduinoWebsockets
@@ -93,6 +96,7 @@ class EspSigK
     void getServerToken(char * token);
     void getRequestHref(const char * clientId, char * requestHref);
     void getRequestToken(const char * requestHref, char * token);
+    IPAddress stringToIPAddress(const String &ipAddrStr);
     signalKAccessResponse sendAccessRequest(const String &urlPath, bool isPost, const String &jsonPayload);
     void preferencesClear();
     String preferencesGet(const String &property);
