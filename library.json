@@ -1,6 +1,6 @@
 {
   "name": "EspSigK",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Library to help using Signal K on a MCU sensor",
   "keywords": "SignalK, Signal K, marine, boat, sensor, hardware, embedded, device",
   "repository":

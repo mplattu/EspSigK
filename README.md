@@ -95,6 +95,11 @@ For more examples see `examples/`.
 
 ## Changelog
 
+0.3.0 "Support for ESP32" 24-MAR-2023
+ * Added support for ESP32
+ * Fixed unresponsive HTTP server during SignalK authentication process
+ * Added reboot call to HTTP api & UI
+
 0.2.0 "Authentication" 21-MAR-2023
  * SignalK v1 authentication process
  * added `library.json` for better PlatformIO support
