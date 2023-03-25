@@ -1,11 +1,5 @@
 #include "EspSigK.h"
 
-#define ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX "SigK: "
-#define ESPSIGK_JSON_DESERIALIZE_DELTA_SIZE 384
-#define ESPSIGK_JSON_DESERIALIZE_HTTP_RESPONSE_SIZE 384
-#define ESPSIGK_PREFERENCES_NAMESPACE "EspSigK"
-#define ESPSIGK_HTTP_SERVER_PORT 8080
-
 // Server variables
 #ifdef EspSigK_ESP8266
 ESP8266WebServer server(ESPSIGK_HTTP_SERVER_PORT);
@@ -131,7 +125,7 @@ EspSigK::EspSigK(String hostname, String ssid, String ssidPass, WiFiClient * cli
   timerReconnect  = millis();
 
   idxDeltaValues = 0; // init deltas
-  for (uint8_t i = 0; i < MAX_DELTA_VALUES; i++) { 
+  for (uint8_t i = 0; i < ESPSIGK_MAX_DELTA_VALUES; i++) { 
     deltaPaths[i] = ""; 
     deltaValues[i] = "";
   }
@@ -735,7 +729,7 @@ void EspSigK::sendDelta() {
  
   //reset delta info
   idxDeltaValues = 0; // init deltas
-  for (uint8_t i = 0; i < MAX_DELTA_VALUES; i++) { 
+  for (uint8_t i = 0; i < ESPSIGK_MAX_DELTA_VALUES; i++) { 
     deltaPaths[i] = ""; 
     deltaValues[i] = "";
   }
