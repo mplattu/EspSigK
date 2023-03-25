@@ -4,14 +4,14 @@
 #define ESPSIGK_JSON_DESERIALIZE_DELTA_SIZE 384
 #define ESPSIGK_JSON_DESERIALIZE_HTTP_RESPONSE_SIZE 384
 #define ESPSIGK_PREFERENCES_NAMESPACE "EspSigK"
-
+#define ESPSIGK_HTTP_SERVER_PORT 8080
 
 // Server variables
 #ifdef EspSigK_ESP8266
-ESP8266WebServer server(80);
+ESP8266WebServer server(ESPSIGK_HTTP_SERVER_PORT);
 #endif
 #ifdef EspSigK_ESP32
-WebServer server(80);
+WebServer server(ESPSIGK_HTTP_SERVER_PORT);
 #endif
 websockets::WebsocketsClient webSocketClient;
 
@@ -210,14 +210,14 @@ void EspSigK::setupDiscovery() {
   if (!MDNS.begin(myHostname.c_str())) {             // Start the mDNS responder for esp8266.local
     printDebugSerialMessage(F("Error setting up MDNS responder!"), true);
   } else {
-    MDNS.addService("http", "tcp", 80);
+    MDNS.addService("http", "tcp", ESPSIGK_HTTP_SERVER_PORT);
     printDebugSerialMessage(F("SIGK: mDNS responder started at "), false);
     printDebugSerialMessage(myHostname, true);
   }
     
   printDebugSerialMessage(F("SIGK: Starting SSDP..."), true);
   SSDP.setSchemaURL("description.xml");
-  SSDP.setHTTPPort(80);
+  SSDP.setHTTPPort(ESPSIGK_HTTP_SERVER_PORT);
   SSDP.setName(myHostname);
   SSDP.setSerialNumber("12345");
   SSDP.setURL("index.html");
