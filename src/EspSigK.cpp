@@ -1,9 +1,9 @@
 #include "EspSigK.h"
 
-#define SERIAL_DEBUG_MESSAGE_PREFIX "SigK: "
-#define JSON_DESERIALIZE_DELTA_SIZE 384
-#define JSON_DESERIALIZE_HTTP_RESPONSE_SIZE 384
-#define PREFERENCES_NAMESPACE "EspSigK"
+#define ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX "SigK: "
+#define ESPSIGK_JSON_DESERIALIZE_DELTA_SIZE 384
+#define ESPSIGK_JSON_DESERIALIZE_HTTP_RESPONSE_SIZE 384
+#define ESPSIGK_PREFERENCES_NAMESPACE "EspSigK"
 
 
 // Server variables
@@ -161,7 +161,7 @@ void EspSigK::printDebugSerialMessage(const char* message, bool newline) {
     return;
   }
   
-  if (lastPrintDebugSerialHadNewline) Serial.print(SERIAL_DEBUG_MESSAGE_PREFIX);
+  if (lastPrintDebugSerialHadNewline) Serial.print(ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX);
   newline ? Serial.println(message) : Serial.print(message);
   lastPrintDebugSerialHadNewline = newline;
 }
@@ -170,7 +170,7 @@ void EspSigK::printDebugSerialMessage(String message, bool newline) {
     return;
   }
   
-  if (lastPrintDebugSerialHadNewline) Serial.print(SERIAL_DEBUG_MESSAGE_PREFIX);
+  if (lastPrintDebugSerialHadNewline) Serial.print(ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX);
   newline ? Serial.println(message) : Serial.print(message);
   lastPrintDebugSerialHadNewline = newline;
 }
@@ -179,7 +179,7 @@ void EspSigK::printDebugSerialMessage(int message, bool newline) {
     return;
   }
   
-  if (lastPrintDebugSerialHadNewline) Serial.print(SERIAL_DEBUG_MESSAGE_PREFIX);
+  if (lastPrintDebugSerialHadNewline) Serial.print(ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX);
   newline ? Serial.println(message) : Serial.print(message);
   lastPrintDebugSerialHadNewline = newline;
 }
@@ -335,7 +335,7 @@ void htmlHandleNotFound(){
 
 void htmlSignalKEndpoints() {
   IPAddress ip;
-  const int capacity = JSON_OBJECT_SIZE(JSON_DESERIALIZE_DELTA_SIZE);
+  const int capacity = JSON_OBJECT_SIZE(ESPSIGK_JSON_DESERIALIZE_DELTA_SIZE);
   StaticJsonDocument<capacity> jsonBuffer;
   char response[2048];
   String wsURL;
@@ -609,7 +609,7 @@ signalKAccessResponse EspSigK::sendAccessRequest(const String &urlPath, bool isP
     return response;
   }
 
-  const int capacity = JSON_OBJECT_SIZE(JSON_DESERIALIZE_HTTP_RESPONSE_SIZE);
+  const int capacity = JSON_OBJECT_SIZE(ESPSIGK_JSON_DESERIALIZE_HTTP_RESPONSE_SIZE);
   DynamicJsonDocument payload(capacity);
 
   DeserializationError error = deserializeJson(payload, *wiFiClient);
@@ -695,7 +695,7 @@ void EspSigK::sendDelta(String path, bool value) {
 }
 
 void EspSigK::sendDelta() {
-  const int capacity = JSON_OBJECT_SIZE(JSON_DESERIALIZE_DELTA_SIZE);
+  const int capacity = JSON_OBJECT_SIZE(ESPSIGK_JSON_DESERIALIZE_DELTA_SIZE);
   StaticJsonDocument<capacity> jsonBuffer;
   String deltaText;
 
@@ -746,7 +746,7 @@ void EspSigK::preferencesClear() {
 
   printDebugSerialMessage(F("preferencesClear"), true);
 
-  preferences.begin(PREFERENCES_NAMESPACE, false);
+  preferences.begin(ESPSIGK_PREFERENCES_NAMESPACE, false);
   // ESP8266 failed to delete preferences using preferences.clear() so deleting preferences one by one
   preferences.remove("clientId");
   preferences.remove("requestHref");
@@ -757,7 +757,7 @@ void EspSigK::preferencesClear() {
 String EspSigK::preferencesGet(const String &property) {
   Preferences preferences;
 
-  preferences.begin(PREFERENCES_NAMESPACE, false);
+  preferences.begin(ESPSIGK_PREFERENCES_NAMESPACE, false);
 
   printDebugSerialMessage(F("preferencesGet, property: "), false);
   printDebugSerialMessage(property, false);
@@ -774,7 +774,7 @@ String EspSigK::preferencesGet(const String &property) {
 void EspSigK::preferencesPut(const String &property, const String &value) {
   Preferences preferences;
 
-  preferences.begin(PREFERENCES_NAMESPACE, false);
+  preferences.begin(ESPSIGK_PREFERENCES_NAMESPACE, false);
   preferences.putString(property.c_str(), value);
   preferences.end();
 

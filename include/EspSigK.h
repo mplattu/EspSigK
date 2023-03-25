@@ -19,8 +19,8 @@
 #include <UUID.h>               // https://github.com/RobTillaart/UUID
 #include <Preferences.h>
 
-#define MAX_DELTA_VALUES 10
-#define SIGNALKAUTH_STR_LENGTH 64
+#define ESPSIGK_MAX_DELTA_VALUES 10
+#define ESPSIGK_SIGNALKAUTH_STR_LENGTH 64
 
 struct signalKAccessResponse {
   String state;
@@ -41,11 +41,11 @@ class EspSigK
     uint16_t signalKServerPort;
     String signalKServerToken;
 
-    char signalKclientId[SIGNALKAUTH_STR_LENGTH];
-    char signalKrequestHref[SIGNALKAUTH_STR_LENGTH];
+    char signalKclientId[ESPSIGK_SIGNALKAUTH_STR_LENGTH];
+    char signalKrequestHref[ESPSIGK_SIGNALKAUTH_STR_LENGTH];
 
-    String deltaPaths[MAX_DELTA_VALUES];
-    String deltaValues[MAX_DELTA_VALUES];
+    String deltaPaths[ESPSIGK_MAX_DELTA_VALUES];
+    String deltaValues[ESPSIGK_MAX_DELTA_VALUES];
     uint8_t idxDeltaValues;
 
     uint32_t wsClientReconnectInterval;
