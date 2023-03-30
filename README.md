@@ -27,6 +27,12 @@ market leader of Signal K sensor libraries.
 
 ## Developing
 
+### Compiler Directives
+
+ * Microcontroller: `EspSigK_ESP8266` or `EspSigK_ESP32`
+ * Sensor HTTP server port for rebooting and resetting the server (defined in `EspSigK.h`): `ESPSIGK_HTTP_SERVER_PORT`
+ * Sensor Websocket server port for debugging SignalK deltas (defined in `EspSigK.h`): `ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT`
+
 ### Example
 
 Define either `EspSigK_ESP8266` or `EspSigK_ESP32` at compile time. When using PlatformIO you can define

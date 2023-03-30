@@ -9,13 +9,18 @@ WebServer server(ESPSIGK_HTTP_SERVER_PORT);
 #endif
 websockets::WebsocketsClient webSocketClient;
 
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+websockets::WebsocketsServer debugWebSocketServer;
+websockets::WebsocketsClient debugWebSocketClient;
+#endif
+
 bool printDeltaSerial;
 bool printDebugSerial;
     
 bool wsClientConnected;
 
 // Simple web page to view deltas
-const char * EspSigKIndexContents = R"foo(
+char * EspSigKIndexContents = (char*)R"foo(
 <html>
 <head>
   <title>Deltas</title>
@@ -23,7 +28,7 @@ const char * EspSigKIndexContents = R"foo(
   <script type="text/javascript">
     var WebSocket = WebSocket || MozWebSocket;
     var lastDelta = Date.now();
-    var serverUrl = "ws://" + window.location.hostname + ":81";
+    var serverUrl = "ws://";                                   // EOL
 
     connection = new WebSocket(serverUrl);
 
@@ -198,6 +203,10 @@ void EspSigK::connectWifi() {
 
   printDebugSerialMessage(F("Connected, IP:"), false);
   printDebugSerialMessage(WiFi.localIP().toString(), true);
+
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+  replaceDeviceWSURL(EspSigKIndexContents);
+#endif  
 }
 
 void EspSigK::setupDiscovery() {
@@ -294,6 +303,17 @@ void EspSigK::safeDelay(unsigned long ms)
 /* ******************************************************************** */
 /* ******************************************************************** */
 /* ******************************************************************** */
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+void EspSigK::replaceDeviceWSURL(char * newContent) {
+  char *pos = strstr(newContent, "ws://");
+  if (pos) {
+    String url = WiFi.localIP().toString() + F(":") + String(ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT) + "\";";
+
+    strncpy(pos + 5, url.c_str(), url.length());
+  }
+}
+#endif
+
 void EspSigK::setupHTTP() {
   printDebugSerialMessage(F("SIGK: Starting HTTP Server"), true);
   server.onNotFound(htmlHandleNotFound);
@@ -308,7 +328,7 @@ void EspSigK::setupHTTP() {
   server.on("/index.html",[]() {
       server.send ( 200, "text/html", EspSigKIndexContents );
     });
-  server.on("/reboot", [&]() {
+  server.on("/reboot", []() {
       server.send (200, "text/html", RebootContent );
       delay(1000);
       ESP.restart();
@@ -366,6 +386,10 @@ void EspSigK::setupWebSocket() {
   webSocketClient.onMessage(webSocketClientMessage);
 
   connectWebSocketClient();
+
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+  debugWebSocketServer.listen(ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT);
+#endif
 }
 
 bool EspSigK::getMDNSService(String &host, uint16_t &port) {
@@ -726,7 +750,19 @@ void EspSigK::sendDelta() {
   if (wsClientConnected) { // client
     webSocketClient.send(deltaText);
   }
- 
+
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+  if (debugWebSocketServer.poll()) {
+    debugWebSocketClient = debugWebSocketServer.accept();
+  }
+
+  debugWebSocketClient.poll();
+  if (debugWebSocketClient.available()) {
+    printDebugSerialMessage("Sending message to debug websocket client", true);
+    debugWebSocketClient.send(deltaText);
+  }
+#endif
+
   //reset delta info
   idxDeltaValues = 0; // init deltas
   for (uint8_t i = 0; i < ESPSIGK_MAX_DELTA_VALUES; i++) { 

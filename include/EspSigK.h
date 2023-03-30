@@ -1,6 +1,10 @@
 #ifndef EspSigK_H
 #define EspSigK_H
 
+#define ESPSIGK_HTTP_SERVER_PORT 8080
+#define ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT 8081
+
+
 #ifdef EspSigK_ESP8266
 #include <ESP8266WiFi.h>        // ESP8266 Core WiFi Library (you most likely already have this in your sketch)
 #include <ESP8266mDNS.h>        // Include the mDNS library
@@ -19,6 +23,10 @@
 #include <UUID.h>               // https://github.com/RobTillaart/UUID
 #include <Preferences.h>
 
+#define ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX "SigK: "
+#define ESPSIGK_JSON_DESERIALIZE_DELTA_SIZE 384
+#define ESPSIGK_JSON_DESERIALIZE_HTTP_RESPONSE_SIZE 384
+#define ESPSIGK_PREFERENCES_NAMESPACE "EspSigK"
 #define ESPSIGK_MAX_DELTA_VALUES 10
 #define ESPSIGK_SIGNALKAUTH_STR_LENGTH 64
 
@@ -83,6 +91,9 @@ class EspSigK
   private:
     void connectWifi();
     void setupDiscovery();
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+    void replaceDeviceWSURL(char * newContent);
+#endif
     void setupHTTP();
 
     void setupWebSocket();
