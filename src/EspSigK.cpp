@@ -305,7 +305,6 @@ void EspSigK::safeDelay(unsigned long ms)
 /* ******************************************************************** */
 #ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
 void EspSigK::replaceDeviceWSURL(char * newContent) {
-  printDebugSerialMessage(newContent, true);
   char *pos = strstr(newContent, "ws://");
   if (pos) {
     String url = WiFi.localIP().toString() + F(":") + String(ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT) + "\";";
