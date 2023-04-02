@@ -20,7 +20,7 @@ bool printDebugSerial;
 bool wsClientConnected;
 
 // Simple web page to view deltas
-char * EspSigKIndexContents = (char*)R"foo(
+char EspSigKIndexContents[] = R"foo(
 <html>
 <head>
   <title>Deltas</title>
@@ -206,7 +206,7 @@ void EspSigK::connectWifi() {
 
 #ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
   replaceDeviceWSURL(EspSigKIndexContents);
-#endif  
+#endif
 }
 
 void EspSigK::setupDiscovery() {
@@ -305,11 +305,12 @@ void EspSigK::safeDelay(unsigned long ms)
 /* ******************************************************************** */
 #ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
 void EspSigK::replaceDeviceWSURL(char * newContent) {
+  printDebugSerialMessage(newContent, true);
   char *pos = strstr(newContent, "ws://");
   if (pos) {
     String url = WiFi.localIP().toString() + F(":") + String(ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT) + "\";";
-
-    strncpy(pos + 5, url.c_str(), url.length());
+    const char *urlCStr = url.c_str();
+    memcpy(pos + 5, urlCStr, url.length());
   }
 }
 #endif
