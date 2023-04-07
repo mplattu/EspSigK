@@ -7,11 +7,10 @@ ESP8266WebServer server(ESPSIGK_HTTP_SERVER_PORT);
 #ifdef EspSigK_ESP32
 WebServer server(ESPSIGK_HTTP_SERVER_PORT);
 #endif
-websockets::WebsocketsClient webSocketClient;
+WebSocketsClient webSocketClient;
 
 #ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
-websockets::WebsocketsServer debugWebSocketServer;
-websockets::WebsocketsClient debugWebSocketClient;
+WebSocketsServer debugWebSocketServer = WebSocketsServer(ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT);
 #endif
 
 bool printDeltaSerial;
@@ -26,24 +25,29 @@ char EspSigKIndexContents[] = R"foo(
   <title>Deltas</title>
   <meta charset="utf-8">
   <script type="text/javascript">
-    var WebSocket = WebSocket || MozWebSocket;
     var lastDelta = Date.now();
     var serverUrl = "ws://";                                   // EOL
 
     connection = new WebSocket(serverUrl);
 
-    connection.onopen = function(evt) {
-      console.log("Connected!");
+    connection.addEventListener('open', (evt) => {
+      console.log("Connected to debug websocket server");
       document.getElementById("box").innerHTML = "Connected!";
       document.getElementById("last").innerHTML = "Last: N/A";
-    };
+    });
 
-    connection.onmessage = function(evt) {
+    connection.addEventListener('message', (evt) => {
       var msg = JSON.parse(evt.data);
+      console.debug(msg);
       document.getElementById("box").innerHTML = JSON.stringify(msg, null, 2);
       document.getElementById("last").innerHTML = "Last: " + ((Date.now() - lastDelta)/1000).toFixed(2) + " seconds";
       lastDelta = Date.now();
-    };
+    });
+
+    connection.addEventListener('close', (evt) => {
+      console.log("Disconnected from debug websocket server", evt.code, evt.reason);
+      document.getElementById("box").innerHTML = "Disconnected! #" + evt.code;
+    });
 
     setInterval(function(){
       document.getElementById("age").innerHTML = "Age: " + ((Date.now() - lastDelta)/1000).toFixed(1) + " seconds";
@@ -280,9 +284,12 @@ void EspSigK::handle() {
   //HTTP
   server.handleClient();
   //WS
-  if (wsClientConnected && webSocketClient.available()) {
-    webSocketClient.poll();
+  if (wsClientConnected) {
+    webSocketClient.loop();
   }
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+  debugWebSocketServer.loop();
+#endif
 }
 
 // our delay function will let stuff like websocket/http etc run instead of blocking
@@ -383,12 +390,15 @@ void htmlSignalKEndpoints() {
 /* ******************************************************************** */
 void EspSigK::setupWebSocket() {
   
-  webSocketClient.onMessage(webSocketClientMessage);
+  webSocketClient.onEvent(webSocketClientEvent);
 
   connectWebSocketClient();
 
 #ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
-  debugWebSocketServer.listen(ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT);
+  printDebugSerialMessage("Starting debug websocket server on port ", false);
+  printDebugSerialMessage(ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT, true);
+  debugWebSocketServer.begin();
+  debugWebSocketServer.onEvent(webSocketDebugClientEvent);
 #endif
 }
 
@@ -436,15 +446,43 @@ void EspSigK::connectWebSocketClient() {
     url = url + "&token=" + signalKServerToken;
   }
 
-  wsClientConnected = webSocketClient.connect(host, port, url);
+  webSocketClient.begin(host, port, url);
+  wsClientConnected = true;
 }
 
-void webSocketClientMessage(websockets::WebsocketsMessage message) {
-  String payload = message.data();
-  Serial.printf("[WSc] get text: %s\n", payload);
-  // receiveDelta(payload);
+void webSocketClientEvent(WStype_t type, uint8_t * payload, size_t length) {
+  switch (type) {
+    case WStype_DISCONNECTED:
+      if (printDebugSerial) {
+        Serial.printf("%sWebsocket client disconnected from server\n", ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX);
+      }
+      wsClientConnected = false;
+      break;
+    case WStype_TEXT:
+      if (printDebugSerial) {
+        Serial.printf("%sWebsocket client received message from server: %s\n", ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX, payload);
+      }
+      break;
+  }
 }
 
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+void webSocketDebugClientEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+  Serial.printf("Debug websocket server event, num: %d, type: %d\n", num, type);
+
+  switch (type) {
+    case WStype_CONNECTED:
+      Serial.printf("%sDebug websocket client %d connected\n", ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX, num);
+      break;
+    case WStype_DISCONNECTED:
+      Serial.printf("%sDebug websocket client disconnected from server\n", ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX);
+      break;
+    case WStype_TEXT:
+      Serial.printf("%sDebug websocket client received message from client: %s\n", ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX, payload);
+      break;
+  }
+}
+#endif
 
 
 /* ******************************************************************** */
@@ -748,19 +786,11 @@ void EspSigK::sendDelta() {
     Serial.println(deltaText);
   }
   if (wsClientConnected) { // client
-    webSocketClient.send(deltaText);
+    webSocketClient.sendTXT(deltaText);
   }
 
 #ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
-  if (debugWebSocketServer.poll()) {
-    debugWebSocketClient = debugWebSocketServer.accept();
-  }
-
-  debugWebSocketClient.poll();
-  if (debugWebSocketClient.available()) {
-    printDebugSerialMessage("Sending message to debug websocket client", true);
-    debugWebSocketClient.send(deltaText);
-  }
+  debugWebSocketServer.broadcastTXT(deltaText);
 #endif
 
   //reset delta info

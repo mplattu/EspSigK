@@ -45,8 +45,8 @@
       "platforms": "espressif32"
     },
     {
-      "owner": "gilmaimon",
-      "name": "ArduinoWebsockets"
+      "owner": "links2004",
+      "name": "WebSockets"
     },
     {
       "owner": "bblanchon",

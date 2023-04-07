@@ -2,7 +2,7 @@
 #define EspSigK_H
 
 #define ESPSIGK_HTTP_SERVER_PORT 8080
-#define ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT 8081
+#define ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT 8091
 
 
 #ifdef EspSigK_ESP8266
@@ -19,9 +19,13 @@
 #endif
 
 #include <ArduinoJson.h>        // https://github.com/bblanchon/ArduinoJson
-#include <ArduinoWebsockets.h>  // https://github.com/gilmaimon/ArduinoWebsockets
+#include <WebSocketsClient.h>   // https://github.com/Links2004/arduinoWebSockets
 #include <UUID.h>               // https://github.com/RobTillaart/UUID
 #include <Preferences.h>
+
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+#include <WebSocketsServer.h>   // https://github.com/Links2004/arduinoWebSockets
+#endif
 
 #define ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX "SigK: "
 #define ESPSIGK_JSON_DESERIALIZE_DELTA_SIZE 384
@@ -124,6 +128,9 @@ class EspSigK
 void htmlSignalKEndpoints();
 void htmlHandleNotFound();
 
-void webSocketClientMessage(websockets::WebsocketsMessage message);
+void webSocketClientEvent(WStype_t type, uint8_t * payload, size_t length);
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+void webSocketDebugClientEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
+#endif
 
 #endif
