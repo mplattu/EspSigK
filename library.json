@@ -41,6 +41,10 @@
       "platforms": "espressif8266"
     },
     {
+      "name": "ESP32SSDP",
+      "platforms": "espressif32"
+    },
+    {
       "owner": "gilmaimon",
       "name": "ArduinoWebsockets"
     },
