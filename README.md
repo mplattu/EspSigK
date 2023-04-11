@@ -27,6 +27,12 @@ market leader of Signal K sensor libraries.
 
 ## Developing
 
+### Compiler Directives
+
+ * Microcontroller: `EspSigK_ESP8266` or `EspSigK_ESP32`
+ * Sensor HTTP server port for rebooting and resetting the server (defined in `EspSigK.h`): `ESPSIGK_HTTP_SERVER_PORT`
+ * Sensor Websocket server port for debugging SignalK deltas (defined in `EspSigK.h`): `ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT`
+
 ### Example
 
 Define either `EspSigK_ESP8266` or `EspSigK_ESP32` at compile time. When using PlatformIO you can define
@@ -81,6 +87,21 @@ void loop() {
 ```
 
 For more examples see `examples/`.
+
+### Debugging
+
+To show the Signal K delta updates:
+
+ 1. Make sure you have defined `ESPSIGK_HTTP_SERVER_PORT` and `ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT`.
+ 1. Start your sensor and find the IP of the device. If you have enabled serial debug messages
+    (`setPrintDebugSerial(true)`) you'll get the IP from the serial monitor.
+ 1. Connect your browser to `http://YOURIP:ESPSIGK_HTTP_SERVER_PORT`. If everything goes as
+    planned, the delta objects are shown on the page and dumped to the browser console.
+
+If you do not get the messages but see a message `Disconnected! #1006` try a different
+browser. This means the browser hasn't been able to open a websocket connection to the
+sensor.
+
 
 ### Publishing
 

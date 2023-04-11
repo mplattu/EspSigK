@@ -1,6 +1,10 @@
 #ifndef EspSigK_H
 #define EspSigK_H
 
+#define ESPSIGK_HTTP_SERVER_PORT 8080
+#define ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT 8091
+
+
 #ifdef EspSigK_ESP8266
 #include <ESP8266WiFi.h>        // ESP8266 Core WiFi Library (you most likely already have this in your sketch)
 #include <ESP8266mDNS.h>        // Include the mDNS library
@@ -15,12 +19,20 @@
 #endif
 
 #include <ArduinoJson.h>        // https://github.com/bblanchon/ArduinoJson
-#include <ArduinoWebsockets.h>  // https://github.com/gilmaimon/ArduinoWebsockets
+#include <WebSocketsClient.h>   // https://github.com/Links2004/arduinoWebSockets
 #include <UUID.h>               // https://github.com/RobTillaart/UUID
 #include <Preferences.h>
 
-#define MAX_DELTA_VALUES 10
-#define SIGNALKAUTH_STR_LENGTH 64
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+#include <WebSocketsServer.h>   // https://github.com/Links2004/arduinoWebSockets
+#endif
+
+#define ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX "SigK: "
+#define ESPSIGK_JSON_DESERIALIZE_DELTA_SIZE 384
+#define ESPSIGK_JSON_DESERIALIZE_HTTP_RESPONSE_SIZE 384
+#define ESPSIGK_PREFERENCES_NAMESPACE "EspSigK"
+#define ESPSIGK_MAX_DELTA_VALUES 10
+#define ESPSIGK_SIGNALKAUTH_STR_LENGTH 64
 
 struct signalKAccessResponse {
   String state;
@@ -41,11 +53,11 @@ class EspSigK
     uint16_t signalKServerPort;
     String signalKServerToken;
 
-    char signalKclientId[SIGNALKAUTH_STR_LENGTH];
-    char signalKrequestHref[SIGNALKAUTH_STR_LENGTH];
+    char signalKclientId[ESPSIGK_SIGNALKAUTH_STR_LENGTH];
+    char signalKrequestHref[ESPSIGK_SIGNALKAUTH_STR_LENGTH];
 
-    String deltaPaths[MAX_DELTA_VALUES];
-    String deltaValues[MAX_DELTA_VALUES];
+    String deltaPaths[ESPSIGK_MAX_DELTA_VALUES];
+    String deltaValues[ESPSIGK_MAX_DELTA_VALUES];
     uint8_t idxDeltaValues;
 
     uint32_t wsClientReconnectInterval;
@@ -83,6 +95,9 @@ class EspSigK
   private:
     void connectWifi();
     void setupDiscovery();
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+    void replaceDeviceWSURL(char * newContent);
+#endif
     void setupHTTP();
 
     void setupWebSocket();
@@ -113,6 +128,9 @@ class EspSigK
 void htmlSignalKEndpoints();
 void htmlHandleNotFound();
 
-void webSocketClientMessage(websockets::WebsocketsMessage message);
+void webSocketClientEvent(WStype_t type, uint8_t * payload, size_t length);
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+void webSocketDebugClientEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
+#endif
 
 #endif

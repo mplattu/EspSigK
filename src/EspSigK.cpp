@@ -1,19 +1,17 @@
 #include "EspSigK.h"
 
-#define SERIAL_DEBUG_MESSAGE_PREFIX "SigK: "
-#define JSON_DESERIALIZE_DELTA_SIZE 384
-#define JSON_DESERIALIZE_HTTP_RESPONSE_SIZE 384
-#define PREFERENCES_NAMESPACE "EspSigK"
-
-
 // Server variables
 #ifdef EspSigK_ESP8266
-ESP8266WebServer server(80);
+ESP8266WebServer server(ESPSIGK_HTTP_SERVER_PORT);
 #endif
 #ifdef EspSigK_ESP32
-WebServer server(80);
+WebServer server(ESPSIGK_HTTP_SERVER_PORT);
 #endif
-websockets::WebsocketsClient webSocketClient;
+WebSocketsClient webSocketClient;
+
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+WebSocketsServer debugWebSocketServer = WebSocketsServer(ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT);
+#endif
 
 bool printDeltaSerial;
 bool printDebugSerial;
@@ -21,30 +19,35 @@ bool printDebugSerial;
 bool wsClientConnected;
 
 // Simple web page to view deltas
-const char * EspSigKIndexContents = R"foo(
+char EspSigKIndexContents[] = R"foo(
 <html>
 <head>
   <title>Deltas</title>
   <meta charset="utf-8">
   <script type="text/javascript">
-    var WebSocket = WebSocket || MozWebSocket;
     var lastDelta = Date.now();
-    var serverUrl = "ws://" + window.location.hostname + ":81";
+    var serverUrl = "ws://";                                   // EOL
 
     connection = new WebSocket(serverUrl);
 
-    connection.onopen = function(evt) {
-      console.log("Connected!");
+    connection.addEventListener('open', (evt) => {
+      console.log("Connected to debug websocket server");
       document.getElementById("box").innerHTML = "Connected!";
       document.getElementById("last").innerHTML = "Last: N/A";
-    };
+    });
 
-    connection.onmessage = function(evt) {
+    connection.addEventListener('message', (evt) => {
       var msg = JSON.parse(evt.data);
+      console.debug(msg);
       document.getElementById("box").innerHTML = JSON.stringify(msg, null, 2);
       document.getElementById("last").innerHTML = "Last: " + ((Date.now() - lastDelta)/1000).toFixed(2) + " seconds";
       lastDelta = Date.now();
-    };
+    });
+
+    connection.addEventListener('close', (evt) => {
+      console.log("Disconnected from debug websocket server", evt.code, evt.reason);
+      document.getElementById("box").innerHTML = "Disconnected! #" + evt.code;
+    });
 
     setInterval(function(){
       document.getElementById("age").innerHTML = "Age: " + ((Date.now() - lastDelta)/1000).toFixed(1) + " seconds";
@@ -131,7 +134,7 @@ EspSigK::EspSigK(String hostname, String ssid, String ssidPass, WiFiClient * cli
   timerReconnect  = millis();
 
   idxDeltaValues = 0; // init deltas
-  for (uint8_t i = 0; i < MAX_DELTA_VALUES; i++) { 
+  for (uint8_t i = 0; i < ESPSIGK_MAX_DELTA_VALUES; i++) { 
     deltaPaths[i] = ""; 
     deltaValues[i] = "";
   }
@@ -161,7 +164,7 @@ void EspSigK::printDebugSerialMessage(const char* message, bool newline) {
     return;
   }
   
-  if (lastPrintDebugSerialHadNewline) Serial.print(SERIAL_DEBUG_MESSAGE_PREFIX);
+  if (lastPrintDebugSerialHadNewline) Serial.print(ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX);
   newline ? Serial.println(message) : Serial.print(message);
   lastPrintDebugSerialHadNewline = newline;
 }
@@ -170,7 +173,7 @@ void EspSigK::printDebugSerialMessage(String message, bool newline) {
     return;
   }
   
-  if (lastPrintDebugSerialHadNewline) Serial.print(SERIAL_DEBUG_MESSAGE_PREFIX);
+  if (lastPrintDebugSerialHadNewline) Serial.print(ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX);
   newline ? Serial.println(message) : Serial.print(message);
   lastPrintDebugSerialHadNewline = newline;
 }
@@ -179,7 +182,7 @@ void EspSigK::printDebugSerialMessage(int message, bool newline) {
     return;
   }
   
-  if (lastPrintDebugSerialHadNewline) Serial.print(SERIAL_DEBUG_MESSAGE_PREFIX);
+  if (lastPrintDebugSerialHadNewline) Serial.print(ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX);
   newline ? Serial.println(message) : Serial.print(message);
   lastPrintDebugSerialHadNewline = newline;
 }
@@ -204,20 +207,24 @@ void EspSigK::connectWifi() {
 
   printDebugSerialMessage(F("Connected, IP:"), false);
   printDebugSerialMessage(WiFi.localIP().toString(), true);
+
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+  replaceDeviceWSURL(EspSigKIndexContents);
+#endif
 }
 
 void EspSigK::setupDiscovery() {
   if (!MDNS.begin(myHostname.c_str())) {             // Start the mDNS responder for esp8266.local
     printDebugSerialMessage(F("Error setting up MDNS responder!"), true);
   } else {
-    MDNS.addService("http", "tcp", 80);
+    MDNS.addService("http", "tcp", ESPSIGK_HTTP_SERVER_PORT);
     printDebugSerialMessage(F("SIGK: mDNS responder started at "), false);
     printDebugSerialMessage(myHostname, true);
   }
     
   printDebugSerialMessage(F("SIGK: Starting SSDP..."), true);
   SSDP.setSchemaURL("description.xml");
-  SSDP.setHTTPPort(80);
+  SSDP.setHTTPPort(ESPSIGK_HTTP_SERVER_PORT);
   SSDP.setName(myHostname);
   SSDP.setSerialNumber("12345");
   SSDP.setURL("index.html");
@@ -277,9 +284,12 @@ void EspSigK::handle() {
   //HTTP
   server.handleClient();
   //WS
-  if (wsClientConnected && webSocketClient.available()) {
-    webSocketClient.poll();
+  if (wsClientConnected) {
+    webSocketClient.loop();
   }
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+  debugWebSocketServer.loop();
+#endif
 }
 
 // our delay function will let stuff like websocket/http etc run instead of blocking
@@ -300,6 +310,17 @@ void EspSigK::safeDelay(unsigned long ms)
 /* ******************************************************************** */
 /* ******************************************************************** */
 /* ******************************************************************** */
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+void EspSigK::replaceDeviceWSURL(char * newContent) {
+  char *pos = strstr(newContent, "ws://");
+  if (pos) {
+    String url = WiFi.localIP().toString() + F(":") + String(ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT) + "\";";
+    const char *urlCStr = url.c_str();
+    memcpy(pos + 5, urlCStr, url.length());
+  }
+}
+#endif
+
 void EspSigK::setupHTTP() {
   printDebugSerialMessage(F("SIGK: Starting HTTP Server"), true);
   server.onNotFound(htmlHandleNotFound);
@@ -314,7 +335,7 @@ void EspSigK::setupHTTP() {
   server.on("/index.html",[]() {
       server.send ( 200, "text/html", EspSigKIndexContents );
     });
-  server.on("/reboot", [&]() {
+  server.on("/reboot", []() {
       server.send (200, "text/html", RebootContent );
       delay(1000);
       ESP.restart();
@@ -335,7 +356,7 @@ void htmlHandleNotFound(){
 
 void htmlSignalKEndpoints() {
   IPAddress ip;
-  const int capacity = JSON_OBJECT_SIZE(JSON_DESERIALIZE_DELTA_SIZE);
+  const int capacity = JSON_OBJECT_SIZE(ESPSIGK_JSON_DESERIALIZE_DELTA_SIZE);
   StaticJsonDocument<capacity> jsonBuffer;
   char response[2048];
   String wsURL;
@@ -369,9 +390,16 @@ void htmlSignalKEndpoints() {
 /* ******************************************************************** */
 void EspSigK::setupWebSocket() {
   
-  webSocketClient.onMessage(webSocketClientMessage);
+  webSocketClient.onEvent(webSocketClientEvent);
 
   connectWebSocketClient();
+
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+  printDebugSerialMessage("Starting debug websocket server on port ", false);
+  printDebugSerialMessage(ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT, true);
+  debugWebSocketServer.begin();
+  debugWebSocketServer.onEvent(webSocketDebugClientEvent);
+#endif
 }
 
 bool EspSigK::getMDNSService(String &host, uint16_t &port) {
@@ -418,15 +446,43 @@ void EspSigK::connectWebSocketClient() {
     url = url + "&token=" + signalKServerToken;
   }
 
-  wsClientConnected = webSocketClient.connect(host, port, url);
+  webSocketClient.begin(host, port, url);
+  wsClientConnected = true;
 }
 
-void webSocketClientMessage(websockets::WebsocketsMessage message) {
-  String payload = message.data();
-  Serial.printf("[WSc] get text: %s\n", payload);
-  // receiveDelta(payload);
+void webSocketClientEvent(WStype_t type, uint8_t * payload, size_t length) {
+  switch (type) {
+    case WStype_DISCONNECTED:
+      if (printDebugSerial) {
+        Serial.printf("%sWebsocket client disconnected from server\n", ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX);
+      }
+      wsClientConnected = false;
+      break;
+    case WStype_TEXT:
+      if (printDebugSerial) {
+        Serial.printf("%sWebsocket client received message from server: %s\n", ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX, payload);
+      }
+      break;
+  }
 }
 
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+void webSocketDebugClientEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+  Serial.printf("Debug websocket server event, num: %d, type: %d\n", num, type);
+
+  switch (type) {
+    case WStype_CONNECTED:
+      Serial.printf("%sDebug websocket client %d connected\n", ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX, num);
+      break;
+    case WStype_DISCONNECTED:
+      Serial.printf("%sDebug websocket client disconnected from server\n", ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX);
+      break;
+    case WStype_TEXT:
+      Serial.printf("%sDebug websocket client received message from client: %s\n", ESPSIGK_SERIAL_DEBUG_MESSAGE_PREFIX, payload);
+      break;
+  }
+}
+#endif
 
 
 /* ******************************************************************** */
@@ -609,7 +665,7 @@ signalKAccessResponse EspSigK::sendAccessRequest(const String &urlPath, bool isP
     return response;
   }
 
-  const int capacity = JSON_OBJECT_SIZE(JSON_DESERIALIZE_HTTP_RESPONSE_SIZE);
+  const int capacity = JSON_OBJECT_SIZE(ESPSIGK_JSON_DESERIALIZE_HTTP_RESPONSE_SIZE);
   DynamicJsonDocument payload(capacity);
 
   DeserializationError error = deserializeJson(payload, *wiFiClient);
@@ -695,7 +751,7 @@ void EspSigK::sendDelta(String path, bool value) {
 }
 
 void EspSigK::sendDelta() {
-  const int capacity = JSON_OBJECT_SIZE(JSON_DESERIALIZE_DELTA_SIZE);
+  const int capacity = JSON_OBJECT_SIZE(ESPSIGK_JSON_DESERIALIZE_DELTA_SIZE);
   StaticJsonDocument<capacity> jsonBuffer;
   String deltaText;
 
@@ -730,12 +786,16 @@ void EspSigK::sendDelta() {
     Serial.println(deltaText);
   }
   if (wsClientConnected) { // client
-    webSocketClient.send(deltaText);
+    webSocketClient.sendTXT(deltaText);
   }
- 
+
+#ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+  debugWebSocketServer.broadcastTXT(deltaText);
+#endif
+
   //reset delta info
   idxDeltaValues = 0; // init deltas
-  for (uint8_t i = 0; i < MAX_DELTA_VALUES; i++) { 
+  for (uint8_t i = 0; i < ESPSIGK_MAX_DELTA_VALUES; i++) { 
     deltaPaths[i] = ""; 
     deltaValues[i] = "";
   }
@@ -746,7 +806,7 @@ void EspSigK::preferencesClear() {
 
   printDebugSerialMessage(F("preferencesClear"), true);
 
-  preferences.begin(PREFERENCES_NAMESPACE, false);
+  preferences.begin(ESPSIGK_PREFERENCES_NAMESPACE, false);
   // ESP8266 failed to delete preferences using preferences.clear() so deleting preferences one by one
   preferences.remove("clientId");
   preferences.remove("requestHref");
@@ -757,7 +817,7 @@ void EspSigK::preferencesClear() {
 String EspSigK::preferencesGet(const String &property) {
   Preferences preferences;
 
-  preferences.begin(PREFERENCES_NAMESPACE, false);
+  preferences.begin(ESPSIGK_PREFERENCES_NAMESPACE, false);
 
   printDebugSerialMessage(F("preferencesGet, property: "), false);
   printDebugSerialMessage(property, false);
@@ -774,7 +834,7 @@ String EspSigK::preferencesGet(const String &property) {
 void EspSigK::preferencesPut(const String &property, const String &value) {
   Preferences preferences;
 
-  preferences.begin(PREFERENCES_NAMESPACE, false);
+  preferences.begin(ESPSIGK_PREFERENCES_NAMESPACE, false);
   preferences.putString(property.c_str(), value);
   preferences.end();
 
