@@ -93,6 +93,7 @@ class EspSigK
     void sendDelta(String path, bool value);
 
   private:
+    bool wifiConnected();
     void connectWifi();
     void setupDiscovery();
 #ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT

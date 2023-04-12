@@ -196,17 +196,28 @@ void EspSigK::printDebugSerialMessage(int message, bool newline) {
 /* ******************************************************************** */
 /* ******************************************************************** */
 
+bool EspSigK::wifiConnected() {
+  return (WiFi.status() == WL_CONNECTED);
+}
 
 void EspSigK::connectWifi() {
   printDebugSerialMessage(F("Connecting to Wifi.."), false);
   WiFi.begin(mySSID.c_str(), mySSIDPass.c_str());
-  while (WiFi.status() != WL_CONNECTED) {
+
+  unsigned long wifiConnectTimeout = millis() + 3000;
+
+  while (! wifiConnected() and (wifiConnectTimeout > millis())) {
     delay(200);
     printDebugSerialMessage(F("."), false);
   }
 
-  printDebugSerialMessage(F("Connected, IP:"), false);
-  printDebugSerialMessage(WiFi.localIP().toString(), true);
+  if (wifiConnected()) {
+    printDebugSerialMessage(F("Connected, IP:"), false);
+    printDebugSerialMessage(WiFi.localIP().toString(), true);
+  }
+  else {
+    printDebugSerialMessage(F("Not connected"), true);
+  }
 
 #ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
   replaceDeviceWSURL(EspSigKIndexContents);
@@ -271,7 +282,7 @@ void EspSigK::handle() {
 
   // reconnect timers, make sure wifi connected and websocket connected
   if ( (timerReconnect + wsClientReconnectInterval) < currentMilis) {
-    if (WiFi.status() != WL_CONNECTED) {
+    if (! wifiConnected()) {
       connectWifi();
     }
     if (!wsClientConnected) {
