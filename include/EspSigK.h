@@ -79,10 +79,11 @@ class EspSigK
     void setPrintDebugSerial(bool v);
     bool isPrintDebugSerial();
 
-
     void begin(void);
     void handle(void);
+    void handle(void (*handleFunction)());
     void safeDelay(unsigned long ms);
+    void safeDelay(unsigned long ms, void (*handleFunction)());
 
     void addDeltaValue(String path, int value);
     void addDeltaValue(String path, double value);

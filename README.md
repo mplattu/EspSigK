@@ -65,6 +65,11 @@ void setup() {
   sigK.begin();                         
 }
 
+// This function will be executed during safeDelay() function, see below
+void localHandler() {
+  Serial.println("Executing localHandler()");
+}
+
 void loop() {
   // There are two options to send deltas:
 
@@ -79,10 +84,15 @@ void loop() {
   // Use this delay function instead of built-in delay()
   // This function will continue handling connections etc. instead of blocking
   sigK.safeDelay(1000);
+  // Optionally, you can pass a callback function pointer. This function will
+  // be executed during wait time.
+  // sigK.safeDelay(1000, &localHandler);
 
   // If you don't use the delay function above call this one every
   // loop in order to handle http/websocket connections etc.
   sigK.handle();
+  // The top-level callback function can be passed to handle(), too.
+  // sigK.handle(&localHandler);
 }
 ```
 

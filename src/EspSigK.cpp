@@ -273,6 +273,10 @@ void EspSigK::begin() {
 }
 
 void EspSigK::handle() {
+  handle(NULL);
+}
+
+void EspSigK::handle(void (*handleFunction)()) {
   yield(); //let the ESP do whatever it needs to...
 
   //Timers
@@ -301,15 +305,22 @@ void EspSigK::handle() {
 #ifdef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
   debugWebSocketServer.loop();
 #endif
+
+  if (handleFunction != NULL) {
+    handleFunction();
+  }
 }
 
-// our delay function will let stuff like websocket/http etc run instead of blocking
-void EspSigK::safeDelay(unsigned long ms)
+void EspSigK::safeDelay(unsigned long ms) {
+  safeDelay(ms, NULL);
+}
+
+void EspSigK::safeDelay(unsigned long ms, void (*handleFunction)())
 {
   uint32_t start = millis();
 
   while (millis() < (start + ms)) {
-    handle();
+    handle(handleFunction);
   }
 }
 
