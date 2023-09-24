@@ -1,9 +1,13 @@
 #ifndef EspSigK_H
 #define EspSigK_H
 
+#ifndef ESPSIGK_HTTP_SERVER_PORT
 #define ESPSIGK_HTTP_SERVER_PORT 8080
-#define ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT 8091
+#endif
 
+#ifndef ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT
+#define ESPSIGK_DEBUG_WEBSOCKET_SERVER_PORT 8091
+#endif
 
 #ifdef EspSigK_ESP8266
 #include <ESP8266WiFi.h>        // ESP8266 Core WiFi Library (you most likely already have this in your sketch)
