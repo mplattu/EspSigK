@@ -758,6 +758,16 @@ void EspSigK::addDeltaValue(String path, bool value) {
   deltaValues[idxDeltaValues] = v;
   idxDeltaValues++;
 }
+void EspSigK::addDeltaValue(String path, String value) {
+  deltaPaths[idxDeltaValues] = path;
+  deltaValues[idxDeltaValues] = "\"" + value + "\"";
+  idxDeltaValues++;
+}
+void EspSigK::addDeltaValue(String path, const char * value) {
+  deltaPaths[idxDeltaValues] = path;
+  deltaValues[idxDeltaValues] = "\"" + String(value) + "\"";
+  idxDeltaValues++;
+}
 
 void EspSigK::sendDelta(String path, int value) {
   addDeltaValue(path, value);
@@ -768,6 +778,14 @@ void EspSigK::sendDelta(String path, double value) {
   sendDelta();
 }
 void EspSigK::sendDelta(String path, bool value) {
+  addDeltaValue(path, value);
+  sendDelta();
+}
+void EspSigK::sendDelta(String path, String value) {
+  addDeltaValue(path, value);
+  sendDelta();
+}
+void EspSigK::sendDelta(String path, const char * value) {
   addDeltaValue(path, value);
   sendDelta();
 }
