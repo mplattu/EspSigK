@@ -52,6 +52,7 @@ class EspSigK
     String myHostname;
     String mySSID;
     String mySSIDPass;
+    uint wiFiConnectTimeout;
 
     String signalKServerHost;
     uint16_t signalKServerPort;
@@ -76,6 +77,7 @@ class EspSigK
 
   public:
     EspSigK(String hostname, String ssid, String ssidPass, WiFiClient * client);
+    void setWiFiConnectTimeout(uint timeoutMs);
     void setServerHost(String newServer);
     void setServerPort(uint16_t newPort);
     void setServerToken(String token);

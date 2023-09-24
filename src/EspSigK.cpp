@@ -118,6 +118,7 @@ EspSigK::EspSigK(String hostname, String ssid, String ssidPass, WiFiClient * cli
   mySSID = ssid;
   mySSIDPass = ssidPass;
   wiFiClient = client;
+  wiFiConnectTimeout = 10000;
 
   wsClientConnected = false;
 
@@ -138,6 +139,10 @@ EspSigK::EspSigK(String hostname, String ssid, String ssidPass, WiFiClient * cli
     deltaPaths[i] = ""; 
     deltaValues[i] = "";
   }
+}
+
+void EspSigK::setWiFiConnectTimeout(uint timeoutMs) {
+  wiFiConnectTimeout = timeoutMs;
 }
 
 void EspSigK::setServerHost(String newServer) {
@@ -204,9 +209,9 @@ void EspSigK::connectWifi() {
   printDebugSerialMessage(F("Connecting to Wifi.."), false);
   WiFi.begin(mySSID.c_str(), mySSIDPass.c_str());
 
-  unsigned long wifiConnectTimeout = millis() + 3000;
+  unsigned long wiFiTimeout = millis() + wiFiConnectTimeout;
 
-  while (! wifiConnected() and (wifiConnectTimeout > millis())) {
+  while (! wifiConnected() and (wiFiTimeout > millis())) {
     delay(200);
     printDebugSerialMessage(F("."), false);
   }
