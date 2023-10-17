@@ -72,6 +72,8 @@ class EspSigK
     bool lastPrintDebugSerialHadNewline;
 
     WiFiClient * wiFiClient;
+
+    long seedForUuidGeneration;
     
     
 

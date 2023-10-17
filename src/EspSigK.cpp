@@ -139,6 +139,8 @@ EspSigK::EspSigK(String hostname, String ssid, String ssidPass, WiFiClient * cli
     deltaPaths[i] = ""; 
     deltaValues[i] = "";
   }
+
+  seedForUuidGeneration = millis();
 }
 
 void EspSigK::setWiFiConnectTimeout(uint timeoutMs) {
@@ -896,6 +898,7 @@ String EspSigK::preferencesGetClientId() {
 
   if (clientIdPreferences == "") {
     uuid.setRandomMode();
+    uuid.seed((uint32_t) seedForUuidGeneration, (uint32_t) millis());
     uuid.generate();
     String newClientId = String(uuid.toCharArray());
     printDebugSerialMessage("New clientId: ", false);
