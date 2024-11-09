@@ -17,7 +17,7 @@ However, the library does not do the following:
 * Receive deltas and pass message to callback function
 
 Supported microcontrollers:
-* ESP8266 (tested Wemos D1), `EspSigK_ESP8266`
+* ESP8266 (tested Wemos D1, ESP-01S 1M), `EspSigK_ESP8266`
 * ESP32 (tested ESP-WROOM32), `EspSigK_ESP32`
 
 ## Check out SensESP
@@ -40,6 +40,13 @@ symbols in `platformio.ini`:
 
 ```
 build_flags = -DEspSigK_ESP8266
+```
+
+Don't forget to include EspSigK library in `platformio.ini`:
+
+```
+lib_deps =
+    https://github.com/mplattu/EspSigK
 ```
 
 Sample app:
