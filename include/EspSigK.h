@@ -98,12 +98,14 @@ class EspSigK
     void addDeltaValue(String path, bool value);
     void addDeltaValue(String path, String value);
     void addDeltaValue(String path, const char * value);
+    void addDeltaValue(String path, const char * value, bool isAlreadyFormatted);
     void sendDelta();
     void sendDelta(String path, int value);
     void sendDelta(String path, double value);
     void sendDelta(String path, bool value);
     void sendDelta(String path, String value);
     void sendDelta(String path, const char * value);
+    void sendDelta(String path, const char * value, bool isAlreadyFormatted);
 
   private:
     bool wifiConnected();
