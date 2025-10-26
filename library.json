@@ -50,7 +50,8 @@
     },
     {
       "owner": "bblanchon",
-      "name": "ArduinoJson"
+      "name": "ArduinoJson",
+      "version": "^6.0.0"
     },
     {
       "owner": "RobTillaart",
