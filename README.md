@@ -133,6 +133,16 @@ sensor.
 
 ## Changelog
 
+0.4.0 "Create random device UUIDs" 17-OCT-2023
+ * Major fix: Added missing random seed to device UUID generation
+ * Added default EspSigK debug HTTP server at port 8080
+ * Added option to call local handler during `safeDelay()`
+ * Added overloaded `deltaValue()` functions to `String` and `const char *` value types
+ * Added `setWiFiConnectTimeout()` and changed default wifi timeout from 3 seconds to 10 secs
+ * Fix: Added missing ESP32SSDP library (required for ESP32)
+ * Fix: Added prefix for internal defined names (settings) to overcome overlapping names
+ * Fix: Do not block `handle()` calls if wifi is not available
+
 0.3.0 "Support for ESP32" 24-MAR-2023
  * Added support for ESP32
  * Fixed unresponsive HTTP server during SignalK authentication process
