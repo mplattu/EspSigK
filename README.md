@@ -134,6 +134,10 @@ sensor.
 
 ## Changelog
 
+0.5.1 "Specify bblanchon/ArduinoJson v6" 26-OCT-2025
+ * Keep using v6 as suggested at https://arduinojson.org/v7/how-to/upgrade-from-v6/:
+   "If your program targets 8-bit microcontrollers, I recommend keeping version 6."
+
 0.5.0 "Send JSON-formatted deltas" 26-OCT-2025
  * Send JSON-formatted deltas
 
