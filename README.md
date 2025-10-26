@@ -83,6 +83,7 @@ void loop() {
   // Send multiple values in one message...
   sigK.addDeltaValue("some.signalk.path", 3.413);
   sigK.addDeltaValue("some.other.path", true);
+  sigK.addDeltaValue("navigation.position", "{\"latitude\":60.19145,\"longitude\":25.05422}", true);
   sigK.sendDelta();
   
   // ...or send a single value
@@ -132,6 +133,9 @@ sensor.
  1. Click "Publish release"
 
 ## Changelog
+
+0.5.0 "Send JSON-formatted deltas" 26-OCT-2025
+ * Send JSON-formatted deltas
 
 0.4.0 "Create random device UUIDs" 17-OCT-2023
  * Major fix: Added missing random seed to device UUID generation
