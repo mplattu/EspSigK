@@ -61,6 +61,10 @@ const String ssidPass  = "superSecret";  // Password for wifi
 
 WiFiClient wiFiClient;
 EspSigK sigK(hostname, ssid, ssidPass, &wiFiClient);
+// or...
+// EspSigK sigK;
+// ...and later...
+// sigK.configure(hostname, ssid, ssidPass, &wiFiClient);
 
 void setup() {
   Serial.begin(115200);

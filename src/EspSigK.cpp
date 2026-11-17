@@ -114,6 +114,11 @@ const char * EspSigKAuthResetContent = R"foo(
 /* ******************************************************************** */
 EspSigK::EspSigK(String hostname, String ssid, String ssidPass, WiFiClient * client)
 {
+  configure(hostname, ssid, ssidPass, client);
+}
+
+void EspSigK::configure(String hostname, String ssid, String ssidPass, WiFiClient * client)
+{
   myHostname = hostname;
   mySSID = ssid;
   mySSIDPass = ssidPass;
